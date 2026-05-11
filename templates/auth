@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TwitchBot — {% if mode == 'login' %}Connexion{% else %}Inscription{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080c14;--surf:#0f1520;--surf2:#141c2e;--border:#1e2840;
+      --purple:#9146ff;--purpled:#7b2fff;--purpleg:rgba(145,70,255,.12);
+      --green:#0dffc8;--red:#ff4757;--text:#c8d4f0;--muted:#4a5778;
+      --ui:'Syne',sans-serif;--mono:'Space Mono',monospace;
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--ui)}
+    body{
+      background-image:linear-gradient(rgba(145,70,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(145,70,255,.03) 1px,transparent 1px);
+      background-size:32px 32px;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem;
+    }
+    .card{width:100%;max-width:420px;background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:2.25rem 2rem;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+    .logo{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem}
+    .logo-icon{width:42px;height:42px;background:var(--purple);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 0 24px rgba(145,70,255,.45);flex-shrink:0}
+    .logo h1{font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+    .logo span{font-size:.68rem;color:var(--muted);font-family:var(--mono);display:block}
+    .tabs{display:flex;gap:0;margin-bottom:1.75rem;background:var(--surf2);border-radius:10px;padding:3px}
+    .tab{flex:1;padding:.55rem;text-align:center;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;color:var(--muted);border:none;background:none;transition:all .2s;font-family:var(--ui)}
+    .tab.active{background:var(--border);color:var(--text)}
+    .field{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1rem}
+    label{font-size:.78rem;font-weight:600;color:#7a8cb0;letter-spacing:.03em}
+    input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:.82rem;padding:.72rem 1rem;outline:none;transition:border-color .2s,box-shadow .2s}
+    input:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purpleg)}
+    .hint{font-size:.7rem;color:var(--muted);font-family:var(--mono);line-height:1.5;margin-top:-.35rem}
+    .btn-submit{width:100%;padding:.9rem;border-radius:12px;border:none;background:var(--purple);color:#fff;font-family:var(--ui);font-size:1rem;font-weight:700;cursor:pointer;margin-top:.5rem;transition:all .2s;box-shadow:0 4px 20px rgba(145,70,255,.35)}
+    .btn-submit:hover:not(:disabled){background:var(--purpled);transform:translateY(-1px);box-shadow:0 6px 28px rgba(145,70,255,.5)}
+    .btn-submit:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .alert{border-radius:10px;padding:.7rem 1rem;font-family:var(--mono);font-size:.78rem;display:none;margin-top:.75rem;line-height:1.5}
+    .alert.error{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--red)}
+    .alert.success{background:rgba(13,255,200,.08);border:1px solid rgba(13,255,200,.2);color:var(--green)}
+    .alert.show{display:block}
+    .sep{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
+    .form-section{display:none}.form-section.active{display:block}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🤖</div>
+    <div>
+      <h1>TwitchBot Panel</h1>
+      <span>Multi-canal · 24/7</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab {% if mode=='login' %}active{% endif %}" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+    <button class="tab {% if mode=='register' %}active{% endif %}" id="tabReg" onclick="switchTab('register')">Inscription</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="form-section {% if mode=='login' %}active{% endif %}" id="formLogin">
+    <div class="field">
+      <label>Nom d'utilisateur</label>
+      <input type="text" id="loginUser" placeholder="ton_pseudo" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
+    </div>
+    <button class="btn-submit" id="btnLogin" onclick="submitLogin()">Se connecter</button>
+    <div class="alert" id="alertLogin"></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="form-section {% if mode=='register' %}active{% endif %}" id="formReg">
+    <div class="field">
+      <label>Nom d'utilisateur (panel)</label>
+      <input type="text" id="regUser" placeholder="ton_pseudo">
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" id="regPass" placeholder="6 caractères minimum">
+    </div>
+    <div class="field">
+      <label>Ton canal Twitch</label>
+      <input type="text" id="regChannel" placeholder="nom_du_canal (sans #)" onkeydown="if(event.key==='Enter')submitRegister()">
+      <p class="hint">Le bot rejoindra ce canal. Tu devras taper <code>!addbot</code> dans ton chat pour l'activer.</p>
+    </div>
+    <button class="btn-submit" id="btnReg" onclick="submitRegister()">Créer mon compte</button>
+    <div class="alert" id="alertReg"></div>
+  </div>
+</div>
+
+<script>
+  function switchTab(mode) {
+    document.getElementById('formLogin').classList.toggle('active', mode==='login');
+    document.getElementById('formReg').classList.toggle('active', mode==='register');
+    document.getElementById('tabLogin').classList.toggle('active', mode==='login');
+    document.getElementById('tabReg').classList.toggle('active', mode==='register');
+    history.replaceState(null,'', mode==='login' ? '/login' : '/register');
+  }
+
+  function showAlert(id, msg, type='error') {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.className = 'alert '+type+' show';
+  }
+
+  async function submitLogin() {
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true; btn.textContent = 'Connexion...';
+    const res  = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username: document.getElementById('loginUser').value, password: document.getElementById('loginPass').value})
+    });
+    const data = await res.json();
+    if(res.ok) { window.location.href = '/dashboard'; }
+    else { showAlert('alertLogin', '❌ '+data.error); btn.disabled=false; btn.textContent='Se connecter'; }
+  }
+
+  async function submitRegister() {
+    const btn = document.getElementById('btnReg');
+    btn.disabled = true; btn.textContent = 'Création...';
+    const res  = await fetch('/api/register', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        username: document.getElementById('regUser').value,
+        password: document.getElementById('regPass').value,
+        channel:  document.getElementById('regChannel').value
+      })
+    });
+    const data = await res.json();
+    if(res.ok) { window.location.href = '/dashboard'; }
+    else { showAlert('alertReg', '❌ '+data.error); btn.disabled=false; btn.textContent='Créer mon compte'; }
+  }
+</script>
+</body>
+</html>
